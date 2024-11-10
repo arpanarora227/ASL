@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Digit Prediction</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #result { font-size: 1.5em; margin-top: 20px; }
+        #videoElement, #canvas {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sign Language Digit Prediction</h1>
+
+    <!-- Video Element for Camera Stream -->
+    <video id="videoElement" autoplay playsinline width="300" height="225"></video>
+    <button onclick="capturePhoto()">Capture Photo</button>
+
+    <!-- Canvas Element to Display Captured Photo -->
+    <canvas id="canvas" width="300" height="225" style="display: none;"></canvas>
+    <div id="result"></div>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Access the camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Error accessing camera: ", error);
+            }
+        }
+
+        // Capture photo from the video stream
+        function capturePhoto() {
+            // Draw the current frame from the video onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the canvas image to a data URL
+            const dataURL = canvas.toDataURL('image/jpeg');
+
+            // Display the canvas
+            canvas.style.display = "block";
+
+            // Send the captured image to the server for prediction
+            predict(dataURL);
+        }
+
+        // Send the captured image to the backend for prediction
+        async function predict(dataURL) {
+            const response = await fetch("http://127.0.0.1:5000/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: dataURL })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("result").innerText = `Predicted Class: ${data.prediction}`;
+            } else {
+                document.getElementById("result").innerText = "Error in prediction.";
+            }
+        }
+
+        // Start the camera when the page loads
+        startCamera();
+    </script>
+</body>
+</html>
