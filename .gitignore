@@ -1,0 +1,7 @@
+# Ignore folders
+__MACOSX/
+Data/
+Test_Dataset_JPG/
+
+# Ignore zip files
+*.zip
